@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Financial Videos</title>
+  <style>
+    /* Add to existing styles */
+    .video-section {
+      padding: 40px 20px;
+      background: #00172b;
+    }
+
+    .video-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 30px;
+    }
+
+    .main-video {
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 179, 255, 0.2);
+    }
+
+    .video-playlist {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .video-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 15px;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .video-item:hover {
+      transform: translateX(10px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .video-item.active {
+      border-left: 4px solid #007BFF;
+      background: #f0f8ff;
+    }
+
+    .video-thumbnail {
+      width: 120px;
+      height: 70px;
+      border-radius: 5px;
+      margin-right: 15px;
+    }
+
+    .quiz-container {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .quiz-question {
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .quiz-option {
+      display: block;
+      padding: 10px;
+      margin: 10px 0;
+      background: white;
+      border: 2px solid #007BFF;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .quiz-option:hover {
+      background: #007BFF;
+      color: white;
+    }
+
+    .video-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .timer {
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<section class="video-section">
+  <div class="container">
+    <h2 style="text-align: center; color: #00BFFF; margin-bottom: 30px;">Interactive Learning Videos</h2>
+
+    <div class="video-container">
+      <div class="main-video">
+        <video id="mainVideo" width="100%" controls>
+          <source src="budgeting-basics.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        <div class="video-controls">
+          <button onclick="restartVideo()" style="background: #00BFFF; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Restart</button>
+          <div class="timer" id="timer">00:00 / 00:00</div>
+        </div>
+      </div>
+
+      <div class="video-playlist" id="playlist">
+        <div class="video-item active" onclick="changeVideo('budgeting-basics.mp4', this)">
+          <img src="budget-thumbnail.jpg" class="video-thumbnail" alt="Budgeting">
+          <div>
+            <h3>Budgeting Basics</h3>
+            <p>8:15 min</p>
+          </div>
+        </div>
+        <div class="video-item" onclick="changeVideo('investing-101.mp4', this)">
+          <img src="investing-thumbnail.jpg" class="video-thumbnail" alt="Investing">
+          <div>
+            <h3>Investing 101</h3>
+            <p>12:30 min</p>
+          </div>
+        </div>
+        <!-- Add more video items -->
+      </div>
+    </div>
+
+    <div class="quiz-container" id="quizContainer">
+      <div class="quiz-question" id="question"></div>
+      <div id="options"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const video = document.getElementById('mainVideo');
+  const timer = document.getElementById('timer');
+  const quizData = {
+    'budgeting-basics.mp4': [
+      {
+        question: "What's the first step in creating a budget?",
+        options: ["Track income", "List expenses", "Set financial goals", "All of the above"],
+        correct: 3
+      }
+    ],
+    'investing-101.mp4': [
+      {
+        question: "What's the main benefit of compound interest?",
+        options: ["Guaranteed returns", "Faster growth over time", "No risk involved", "Immediate access to funds"],
+        correct: 1
+      }
+    ]
+  };
+
+  video.addEventListener('timeupdate', updateTimer);
+  video.addEventListener('ended', showQuiz);
+
+  function updateTimer() {
+    const minutes = Math.floor(video.currentTime / 60);
+    const seconds = Math.floor(video.currentTime % 60);
+    const totalMinutes = Math.floor(video.duration / 60);
+    const totalSeconds = Math.floor(video.duration % 60);
+    timer.textContent =
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} /
+      ${String(totalMinutes).padStart(2, '0')}:${String(totalSeconds).padStart(2, '0')}`;
+  }
+
+  function changeVideo(src, element) {
+    video.src = src;
+    document.querySelectorAll('.video-item').forEach(item => item.classList.remove('active'));
+    element.classList.add('active');
+    quizContainer.style.display = 'none';
+    video.play();
+  }
+
+  function showQuiz() {
+    const quiz = quizData[video.src.split('/').pop()];
+    if (quiz) {
+      const container = document.getElementById('quizContainer');
+      container.style.display = 'block';
+      document.getElementById('question').textContent = quiz[0].question;
+
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = quiz[0].options.map((option, index) => `
+        <div class="quiz-option" onclick="checkAnswer(${index}, ${quiz[0].correct})">
+          ${option}
+        </div>
+      `).join('');
+    }
+  }
+
+  function checkAnswer(selected, correct) {
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach(option => {
+      option.style.backgroundColor = selected === correct ? '#00C805' : '#FF4040';
+      option.style.color = 'white';
+    });
+
+    setTimeout(() => {
+      quizContainer.style.display = 'none';
+    }, 3000);
+  }
+
+  function restartVideo() {
+    video.currentTime = 0;
+    video.play();
+    quizContainer.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>

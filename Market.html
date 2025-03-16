@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeenInvest Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+      background: #0A0A0A;
+      color: #fff;
+    }
+
+    .header {
+      padding: 15px;
+      background: linear-gradient(135deg, #001510 0%, #000 100%);
+      border-bottom: 1px solid #1A2E35;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #1A2E35;
+    }
+
+    .tab {
+      padding: 15px 25px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #001510;
+    }
+
+    .tab.active {
+      background: #002D20;
+      border-bottom: 2px solid #00C805;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .portfolio-section {
+      background: #001510;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #1A2E35;
+    }
+
+    .stock-card {
+      background: #002D20;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      border: 1px solid #1A2E35;
+      transition: transform 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .stock-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .chart-container {
+      height: 300px;
+      margin: 20px 0;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #001510;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #00C805;
+      z-index: 1000;
+      width: 350px;
+    }
+
+    .stock-info-card {
+      position: absolute;
+      background: #002D20;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #1A2E35;
+      max-width: 300px;
+      display: none;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .pie-chart-container {
+      height: 250px;
+    }
+
+    .input-group {
+      margin: 15px 0;
+    }
+
+    input {
+      background: #002D20;
+      border: 1px solid #1A2E35;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary {
+      background: #00C805;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #1A2E35;
+      color: white;
+    }
+
+    .positive { color: #00C805; }
+    .negative { color: #FF4040; }
+
+    .stock-performance {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #1A2E35;
+    }
+
+    .time-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <h2>TeenInvest Pro</h2>
+  <div>Day: <span id="currentDay">1</span></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
+  <div class="tab" onclick="showTab('market')">Market</div>
+  <div class="tab" onclick="showTab('history')">History</div>
+</div>
+
+<!-- Dashboard Tab -->
+<div class="dashboard" id="dashboardTab">
+  <div class="portfolio-section">
+    <h3>Portfolio Value: $<span id="portfolioValue">10000.00</span></h3>
+    <div class="time-controls">
+      <button class="btn btn-primary" onclick="advanceDay()">Advance 1 Day</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="portfolioChart"></canvas>
+    </div>
+    <h4>Asset Allocation</h4>
+    <div class="pie-chart-container">
+      <canvas id="allocationChart"></canvas>
+    </div>
+  </div>
+
+  <div class="portfolio-section">
+    <h4>Your Holdings</h4>
+    <div id="holdingsList"></div>
+  </div>
+</div>
+
+<!-- Market Tab -->
+<div id="marketTab" style="display: none; padding: 20px;">
+  <h3>Stock Market</h3>
+  <div id="marketList"></div>
+</div>
+
+<!-- History Tab -->
+<div id="historyTab" style="display: none; padding: 20px;">
+  <h3>Transaction History</h3>
+  <div id="historyList"></div>
+</div>
+
+<!-- Buy Stock Modal -->
+<div class="modal" id="buyModal">
+  <h3 id="modalStockSymbol"></h3>
+  <div class="input-group">
+    <label>Current Price: $<span id="modalStockPrice"></span></label>
+  </div>
+  <div class="input-group">
+    <label>Shares to Buy:</label>
+    <input type="number" id="sharesInput" min="1" value="1" oninput="calculateTotal()">
+  </div>
+  <div class="input-group">
+    <label>Total Cost: $<span id="totalCost">0.00</span></label>
+  </div>
+  <div style="display: flex; gap: 10px; margin-top: 15px;">
+    <button class="btn btn-primary" onclick="confirmPurchase()">Confirm</button>
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Stock Info Card -->
+<div class="stock-info-card" id="stockInfoCard"></div>
+
+<script>
+  let currentDay = 1;
+  let portfolioValueHistory = [10000];
+  let portfolioChart, allocationChart;
+  let transactionHistory = [];
+
+  const stocks = {
+    'AAPL': { shares: 5 },
+    'TSLA': { shares: 2 },
+    'GOOGL': { shares: 3 }
+  };
+
+  const marketStocks = {
+    'AAPL': {
+      price: 189.20,
+      sector: 'Technology',
+      company: 'Apple Inc.',
+      desc: "Consumer electronics and software company",
+      history: [189.20]
+    },
+    'TSLA': {
+      price: 245.50,
+      sector: 'Automotive',
+      company: 'Tesla Inc.',
+      desc: "Electric vehicle and clean energy company",
+      history: [245.50]
+    },
+    'GOOGL': {
+      price: 135.25,
+      sector: 'Technology',
+      company: 'Alphabet Inc.',
+      desc: "Multinational technology conglomerate",
+      history: [135.25]
+    },
+    'AMZN': {
+      price: 125.75,
+      sector: 'E-commerce',
+      company: 'Amazon.com Inc.',
+      desc: "Multinational technology company",
+      history: [125.75]
+    },
+    'MSFT': {
+      price: 305.65,
+      sector: 'Technology',
+      company: 'Microsoft Corporation',
+      desc: "Technology company",
+      history: [305.65]
+    }
+  };
+
+  function initCharts() {
+    // Portfolio Chart
+    const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
+    portfolioChart = new Chart(portfolioCtx, {
+      type: 'line',
+      data: getChartData(),
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        elements: { point: { radius: 0 } }
+      }
+    });
+
+    // Allocation Chart
+    const allocationCtx = document.getElementById('allocationChart').getContext('2d');
+    allocationChart = new Chart(allocationCtx, {
+      type: 'pie',
+      data: getAllocationData(),
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+
+  function getChartData() {
+    return {
+      labels: Array.from({length: currentDay}, (_, i) => `Day ${i + 1}`),
+      datasets: [{
+        data: portfolioValueHistory,
+        borderColor: '#00C805',
+        tension: 0.4,
+        borderWidth: 2
+      }]
+    };
+  }
+
+  function getAllocationData() {
+    const allocations = [];
+    for (const symbol in stocks) {
+      if (stocks[symbol].shares > 0) {
+        const value = marketStocks[symbol].price * stocks[symbol].shares;
+        allocations.push({
+          value: value,
+          label: symbol,
+          color: getSectorColor(marketStocks[symbol].sector)
+        });
+      }
+    }
+    return {
+      labels: allocations.map(a => a.label),
+      datasets: [{
+        data: allocations.map(a => a.value),
+        backgroundColor: allocations.map(a => a.color)
+      }]
+    };
+  }
+
+  function getSectorColor(sector) {
+    const colors = {
+      'Technology': '#00C805',
+      'Automotive': '#FF4040',
+      'E-commerce': '#00B4D8'
+    };
+    return colors[sector] || '#888';
+  }
+
+  function showStockInfo(event, symbol) {
+    const stock = marketStocks[symbol];
+    const card = document.getElementById('stockInfoCard');
+    card.innerHTML = `
+                <h4>${stock.company} (${symbol})</h4>
+                <p>Sector: ${stock.sector}</p>
+                <p>${stock.desc}</p>
+                <p>Price: $${stock.price.toFixed(2)}</p>
+                <div class="stock-performance">
+                    <span>1D: <span class="${getChangeClass(stock.history)}">${calculateDailyChange(stock.history)}%</span></span>
+                </div>
+            `;
+    card.style.display = 'block';
+    card.style.left = `${event.pageX + 15}px`;
+    card.style.top = `${event.pageY}px`;
+  }
+
+  function calculateDailyChange(history) {
+    if (history.length < 2) return 0.00;
+    const change = ((history[history.length-1] - history[history.length-2]) / history[history.length-2]) * 100;
+    return change.toFixed(2);
+  }
+
+  function getChangeClass(history) {
+    const change = calculateDailyChange(history);
+    return change >= 0 ? 'positive' : 'negative';
+  }
+
+  function hideStockInfo() {
+    document.getElementById('stockInfoCard').style.display = 'none';
+  }
+
+  function showBuyModal(symbol) {
+    const modal = document.getElementById('buyModal');
+    modal.style.display = 'block';
+    document.getElementById('modalStockSymbol').textContent = symbol;
+    document.getElementById('modalStockPrice').textContent = marketStocks[symbol].price.toFixed(2);
+    calculateTotal();
+  }
+
+  function closeModal() {
+    document.getElementById('buyModal').style.display = 'none';
+  }
+
+  function calculateTotal() {
+    const shares = parseInt(document.getElementById('sharesInput').value) || 0;
+    const price = parseFloat(document.getElementById('modalStockPrice').textContent);
+    document.getElementById('totalCost').textContent = (shares * price).toFixed(2);
+  }
+
+  function confirmPurchase() {
+    const symbol = document.getElementById('modalStockSymbol').textContent;
+    const shares = parseInt(document.getElementById('sharesInput').value);
+
+    if (shares > 0) {
+      if (!stocks[symbol]) stocks[symbol] = { shares: 0 };
+      stocks[symbol].shares += shares;
+      transactionHistory.push({
+        date: currentDay,
+        type: 'BUY',
+        symbol: symbol,
+        shares: shares,
+        price: marketStocks[symbol].price
+      });
+      updateAllViews();
+      closeModal();
+    }
+  }
+
+  function updateAllViews() {
+    updateHoldingsList();
+    updateMarketList();
+    updateHistoryList();
+    updateCharts();
+    updatePortfolioValue();
+  }
+
+  function updateCharts() {
+    portfolioChart.data = getChartData();
+    portfolioChart.update();
+
+    allocationChart.data = getAllocationData();
+    allocationChart.update();
+  }
+
+  function updatePortfolioValue() {
+    let total = 0;
+    for (const symbol in stocks) {
+      total += marketStocks[symbol].price * stocks[symbol].shares;
+    }
+    portfolioValueHistory.push(total);
+    document.getElementById('portfolioValue').textContent = total.toFixed(2);
+  }
+
+  function updateHoldingsList() {
+    const holdingsList = document.getElementById('holdingsList');
+    holdingsList.innerHTML = '';
+
+    for (const symbol in stocks) {
+      if (stocks[symbol].shares > 0) {
+        const stock = marketStocks[symbol];
+        const value = stock.price * stocks[symbol].shares;
+        const change = calculateDailyChange(stock.history);
+
+        holdingsList.innerHTML += `
+                        <div class="stock-card"
+                            onmouseover="showStockInfo(event, '${symbol}')"
+                            onmouseout="hideStockInfo()">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>
+                                    <h3>${symbol}</h3>
+                                    <p>${stock.company}</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div class="${getChangeClass(stock.history)}">$${stock.price.toFixed(2)}</div>
+                                    <div>${stocks[symbol].shares} shares</div>
+                                </div>
+                            </div>
+                            <div class="stock-performance">
+                                <span>Value: $${value.toFixed(2)}</span>
+                                <span class="${getChangeClass(stock.history)}">${change}%</span>
+                            </div>
+                        </div>
+                    `;
+      }
+    }
+  }
+
+  function updateMarketList() {
+    const marketList = document.getElementById('marketList');
+    marketList.innerHTML = '';
+
+    for (const symbol in marketStocks) {
+      const stock = marketStocks[symbol];
+      const change = calculateDailyChange(stock.history);
+
+      marketList.innerHTML += `
+                    <div class="stock-card"
+                        onmouseover="showStockInfo(event, '${symbol}')"
+                        onmouseout="hideStockInfo()">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3>${symbol}</h3>
+                                <p>${stock.company}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="${getChangeClass(stock.history)}">$${stock.price.toFixed(2)}</div>
+                                <button class="btn btn-primary" onclick="showBuyModal('${symbol}')">Buy</button>
+                            </div>
+                        </div>
+                        <div class="stock-performance">
+                            <span>${stock.sector}</span>
+                            <span class="${getChangeClass(stock.history)}">${change}%</span>
+                        </div>
+                    </div>
+                `;
+    }
+  }
+
+  function updateHistoryList() {
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = transactionHistory.reverse().map(transaction => `
+                <div class="stock-card">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <h3>${transaction.symbol}</h3>
+                            <p>Day ${transaction.date}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="${transaction.type === 'BUY' ? 'positive' : 'negative'}">${transaction.type}</div>
+                            <div>${transaction.shares} @ $${transaction.price.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+  }
+
+  function advanceDay() {
+    currentDay++;
+    document.getElementById('currentDay').textContent = currentDay;
+
+    // Update all stock prices
+    for (const symbol in marketStocks) {
+      const change = (Math.random() - 0.5) * 0.1; // ±5% daily change
+      const newPrice = marketStocks[symbol].price * (1 + change);
+      marketStocks[symbol].price = Math.round(newPrice * 100) / 100;
+      marketStocks[symbol].history.push(marketStocks[symbol].price);
+    }
+
+    updateAllViews();
+  }
+
+  function showTab(tabName) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('[id$="Tab"]').forEach(tab => tab.style.display = 'none');
+
+    document.getElementById(`${tabName}Tab`).style.display = tabName === 'dashboard' ? 'grid' : 'block';
+    document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+  }
+
+  // Initialize the app
+  initCharts();
+  updateAllViews();
+</script>
+</body>
+</html>

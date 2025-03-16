@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Games</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #000000;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: linear-gradient(135deg, #012242, #00BFFF);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .game-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      padding: 2rem;
+    }
+    .game {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin: 1rem;
+      padding: 1rem;
+      width: 30%;
+      text-align: center;
+    }
+
+    .game:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 8px 20px rgb(255, 238, 238);
+    }
+
+    .game h2 {
+      color: #000000;
+    }
+    .game p {
+      font-size: 1rem;
+      color: #666;
+    }
+    .game a {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: #0056b3;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    .game a:hover {
+      background-color: #000000;
+    }
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Interactive Games</h1>
+  <p>Learn about money management through fun and interactive games!</p>
+</header>
+
+<div class="game-container">
+  <!-- Game 1: Budgeting Challenge -->
+  <div class="game">
+    <h2>Budgeting Challenge</h2>
+    <p>Learn how to manage your expenses and save money by creating a budget.</p>
+    <a href="">Play Now</a>
+  </div>
+
+  <!-- Game 2: Investment Simulator -->
+  <div class="game">
+    <h2>Investment Simulator</h2>
+    <p>Discover the basics of investing and see how your money can grow over time.</p>
+    <a href="Market.html">Play Now</a>
+  </div>
+
+  <!-- Game 3: Debt Dodge -->
+  <div class="game">
+    <h2>Debt Dodge</h2>
+    <p>Avoid the pitfalls of debt and learn how to make smart financial decisions.</p>
+    <a href="#">Play Now</a>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2023 Financial Literacy for Teens. All rights reserved.</p>
+</footer>
+</body>
+</html>
